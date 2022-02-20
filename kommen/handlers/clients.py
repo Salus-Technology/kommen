@@ -3,7 +3,7 @@
 """clients.py: """
 
 # imports
-from handlers import client
+from handlers.client import ClientHandler as client
 
 __author__ = "Jason M. Pittman"
 __copyright__ = "Copyright 2021, Salus Technologies"

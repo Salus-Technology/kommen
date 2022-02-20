@@ -10,7 +10,7 @@ from Crypto.Signature import PKCS1_v1_5
 from Crypto.Hash import SHA512
 from base64 import b64encode, b64decode
 
-from kommen_shared.hash_crypto import HashCryptographyHandler
+from crypto.hash_crypto import HashCryptographyHandler
 
 __author__ = "Jason M. Pittman"
 __copyright__ = "Copyright 2021, Salus Technologies"
@@ -54,11 +54,11 @@ class AsymmetricCryptographyHandler:
         exists = False
         
         if keypair is not None: 
-            private_key = pathlib.Path(r'../keys/' + keypair[0])
-            public_key = pathlib.Path(r'../keys/' + keypair[1])
+            private_key = pathlib.Path(r'../data/keys/' + keypair[0])
+            public_key = pathlib.Path(r'../data/keys/' + keypair[1])
         else:
-            private_key = pathlib.Path(r'../keys/private.pem')
-            public_key = pathlib.Path(r'../keys/public.pem')
+            private_key = pathlib.Path(r'../data/keys/private.pem')
+            public_key = pathlib.Path(r'../data/keys/public.pem')
 
         if private_key.exists() and public_key.exists():
             exists = True
@@ -87,16 +87,16 @@ class AsymmetricCryptographyHandler:
 
         try:
             if client is not None:
-                with open(pathlib.Path(r'keys/' + client + '_private.pem'), 'wb') as private_file:
+                with open(pathlib.Path(r'../data/keys/' + client + '_private.pem'), 'wb') as private_file:
                     private_file.write(private_key)
             
-                with open(pathlib.Path(r'keys/' + client +  '_public.pem'), 'wb') as public_file:
+                with open(pathlib.Path(r'../data/keys/' + client +  '_public.pem'), 'wb') as public_file:
                     public_file.write(public_key)
             else:
-                with open(pathlib.Path(r'keys/' + name.hexdigest() + '_private.pem'), 'wb') as private_file:
+                with open(pathlib.Path(r'../data/keys/' + name.hexdigest() + '_private.pem'), 'wb') as private_file:
                     private_file.write(private_key)
             
-                with open(pathlib.Path(r'keys/' + name.hexdigest() + '_public.pem'), 'wb') as public_file:
+                with open(pathlib.Path(r'../data/keys/' + name.hexdigest() + '_public.pem'), 'wb') as public_file:
                     public_file.write(public_key)
         except Exception as e:
             print('Error writing key to file: ' + str(e)) #add logging
@@ -118,8 +118,8 @@ class AsymmetricCryptographyHandler:
         """ 
         is_removed = False
 
-        private_key = pathlib.Path(r'keys/' + privkey.lower() + '_private.pem')
-        public_key = pathlib.Path(r'keys/' + pubkey.lower() +  '_public.pem')
+        private_key = pathlib.Path(r'../data/keys/' + privkey.lower() + '_private.pem')
+        public_key = pathlib.Path(r'../data/keys/' + pubkey.lower() +  '_public.pem')
 
         try:
             pathlib.Path.unlink(private_key)
@@ -144,9 +144,9 @@ class AsymmetricCryptographyHandler:
         
         """
         if privkey is not None:
-            private_key = pathlib.Path(r'../keys/' + privkey)
+            private_key = pathlib.Path(r'../data/keys/' + privkey)
         else:
-            private_key = pathlib.Path(r'../keys/private.pem')
+            private_key = pathlib.Path(r'../data/keys/private.pem')
         
         try:
             with open(private_key, 'r') as k:
@@ -177,9 +177,9 @@ class AsymmetricCryptographyHandler:
         is_valid = False
 
         if pubkey is not None:
-            public_key = pathlib.Path(r'../keys/' + pubkey)
+            public_key = pathlib.Path(r'../data/keys/' + pubkey)
         else:
-            public_key = pathlib.Path(r'../keys/public.pem')
+            public_key = pathlib.Path(r'../data/keys/public.pem')
 
         try:
             with open(public_key, 'rb') as f:
@@ -208,9 +208,9 @@ class AsymmetricCryptographyHandler:
         
         """
         if pubkey is not None:
-            public_key = pathlib.Path(r'../keys/' + pubkey)
+            public_key = pathlib.Path(r'../data/keys/' + pubkey)
         else:
-            public_key = pathlib.Path(r'../keys/public.pem')
+            public_key = pathlib.Path(r'../data/keys/public.pem')
 
         try:
             with open(public_key, "rb") as k:
@@ -234,9 +234,9 @@ class AsymmetricCryptographyHandler:
         
         """
         if privkey is not None:
-            private_key = pathlib.Path(r'../keys/' + privkey)
+            private_key = pathlib.Path(r'../data/keys/' + privkey)
         else:
-            private_key = pathlib.Path(r'../keys/private.pem')
+            private_key = pathlib.Path(r'../data/keys/private.pem')
 
         try:
             with open(private_key, "rb") as k: #privkey is a filepath to private key .pem file

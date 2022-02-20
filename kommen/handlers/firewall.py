@@ -15,7 +15,18 @@ __email__ = "jason@jasonmpittman.com"
 __status__ = "Development"
 
 
-import iptc
+#import iptc
+import os
+import sys
+for xtdir in ["/usr/lib64/xtables/", "/lib/xtables", "/usr/lib/xtables", "/usr/local/lib/xtables"]:
+    if os.path.isdir(xtdir):
+        os.environ['XTABLES_LIBDIR'] = xtdir
+        break
+try:
+    import iptc
+except:
+    sys.exit("python-iptables isn't installed.")
+
 import subprocess
 from subprocess import check_output
 import configparser

@@ -35,10 +35,16 @@ __status__ = "Development"
 """    
 
 config = configparser.ConfigParser()
-config.read('server.ini')
+try:
+    config.read('../data/server.ini')
+except:
+    print("problem reading config file")
+
 __server = config['service']['url']
 __port = config['service']['port']
 __url = 'http://' + __server + ':' + __port
+
+print(__url)
 
 def add_client(rac):
     if rac == "empty_string":

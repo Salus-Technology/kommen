@@ -7,8 +7,8 @@ from handlers import database
 from handlers import client
 
 # import shared modules
-from kommen_shared import asym_crypto 
-from kommen_shared import sym_crypto 
+from crypto import asym_crypto 
+from crypto import sym_crypto 
 
 __author__ = "Jason M. Pittman"
 __copyright__ = "Copyright 2021, Salus Technologies"
@@ -32,7 +32,7 @@ class RegistrationHandler:
 
     """ 
     def __init__(self):
-        self.db = database.DatabaseHandler() 
+        self.db = database.DatabaseHandler()
 
     def register_client(self, client_id=None):
         

@@ -7,7 +7,7 @@ import os
 import sqlite3
 from sqlite3.dbapi2 import Error
 
-from handlers import client
+from handlers.client import ClientHandler as client
 
 __author__ = "Jason M. Pittman"
 __copyright__ = "Copyright 2021, Salus Technologies"
@@ -35,7 +35,7 @@ class DatabaseHandler:
     """
 
     __db_handle = " "
-    __db_file = os.path.relpath("data/kommen.db")
+    __db_file = os.path.relpath("../data/kommen.db")
 
     def __init__(self):
         # check if db exists; if not, create it
