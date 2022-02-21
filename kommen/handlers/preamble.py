@@ -24,10 +24,12 @@ __status__ = "Development"
 def handle(connection, address):
     try:
         print("Connected %r at %r", connection, address)
+
         while True:
             data = connection.recv(1024)
-            client_id, count = data.decode("utf-8").strip().split(',') # decode and split on comma to get client_id, counter
-            print(client_id + 'is at ' + count)
+            #we process the preamble here
+            client_id, count, pubkey = data.decode("utf-8").strip().split(',') # decode and split on comma to get client_id, counter
+            print(client_id + 'is at ' + count + ' with key' + pubkey)
             
             
             # check client_id and count against database
@@ -46,6 +48,7 @@ def handle(connection, address):
         connection.close()
 
 def handle_premable():
+    #decrypt payload
     #Server checks clients object for client_id:
     #if the client_id is in clients, server replies with a received_valid message
     #if the client_id is not in clients, server replies with a received_invalid message
