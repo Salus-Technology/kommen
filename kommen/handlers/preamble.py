@@ -71,7 +71,7 @@ def is_valid_preamble(client_id, count):
         print("didn't find client_id")
     
 
-class SocketHandler: 
+class PreambleHandler: 
     """
     
     """
@@ -95,7 +95,7 @@ class SocketHandler:
 
 
 if __name__ == "__main__":
-    server = SocketHandler("0.0.0.0", 5002)
+    server = PreambleHandler("0.0.0.0", 5002)
 
     try:
         print("Listening")
