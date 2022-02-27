@@ -14,6 +14,7 @@ from handlers import database
 from handlers import client
 from handlers import clients
 from handlers import registration
+from handlers import server
 
 __author__ = "Jason M. Pittman"
 __copyright__ = "Copyright 2021, Salus Technologies"
@@ -36,6 +37,9 @@ def kommen_protocol():
 app = Flask(__name__)
 app.config["DEBUG"] = True # toss this into a kommen.config service cfg later
 
+# we need to check if this is the first time the server has run
+# if so we need to generate the server keys and get everything setup
+
 list_of_clients = clients.ClientsHandler()
 
 # https://networklore.com/start-task-with-flask/
@@ -44,6 +48,17 @@ list_of_clients = clients.ClientsHandler()
 
 @app.route("/")
 def index():
+    pass
+
+@app.route("/initialize/", defaults={}, methods=['GET'])
+def initialize():
+    svr = server.ServerHandler()
+    state = svr.initialize_server()
+
+    return "<h1> Result from server initializaiton: " + str(state) + "</h1>"
+
+@app.route("/server_status", defaults={}, methods=['GET'])
+def server_status():
     pass
 
 @app.route("/add_client", defaults={"rac": None}, methods=['GET'])
@@ -202,5 +217,13 @@ def load_clients( ): #this works 9/11
         
         list_of_clients.add_client(new_client)
 
+def initialize_server():
+    # check for data dir
+    
+    # check for keys dir
+    
+    # check for server keys (pub, priv, sym)
+    
+    pass
 
 app.run()

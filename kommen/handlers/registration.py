@@ -36,13 +36,15 @@ class RegistrationHandler:
 
     def register_client(self, client_id=None):
         
-        # outer conditional to handle if client_id is none or 
-        
         # generate keypair and get ids
         asym = asym_crypto.AsymmetricCryptographyHandler()
         sym = sym_crypto.SymmetricCryptographyHandler()
 
-        created = asym.create_keys()
+        # outer conditional to handle if client_id is none or 
+        if client_id is None:
+            created = asym.create_keys()
+        else:
+            created = asym.create_keys(client_id)
 
         if created[0] is True:
             # build a new client object ; need to get the pubkey hash back somehow to set some of these attributes

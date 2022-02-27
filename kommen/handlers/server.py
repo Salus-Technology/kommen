@@ -2,13 +2,14 @@
 
 """server.py: """
 
-# import handlers
-#import database
 import os
+import sys
 
-# import shared modules
-#from crypto import asym_crypto 
-#from crypto import sym_crypto 
+#sys.path.append('..')
+
+from crypto import asym_crypto 
+from crypto import sym_crypto 
+
 
 __author__ = "Jason M. Pittman"
 __copyright__ = "Copyright 2022, Salus Technologies"
@@ -36,30 +37,48 @@ class ServerHandler():
         pass
 
     def initialize_server(self):
-        does_datadir_exist = False
-        does_keysdir_exist = False
-        do_keys_exist = False
+        is_datadir = False
+        is_keydir = False
+        is_privkey = False
+        is_pubkey = False
+        
         data_path = '../../data'
         keys_path = '../../data/keys/'
+        server_privkey = keys_path + 'server_private.pem' 
+        server_pubkey = keys_path + 'server_public.pem'
+
+        crypto = asym_crypto.AsymmetricCryptographyHandler()
 
         try:
-            does_datadir_exist = os.path.isdir(data_path) #if false, create the dir
-            print(does_datadir_exist)
+            is_datadir = os.path.isdir(data_path) #if false, create the dir
+            print(is_datadir)
 
-            does_keysdir_exist = os.path.isdir(keys_path) #if false, create the dir
-            print(does_keysdir_exist)
+            is_keydir = os.path.isdir(keys_path) #if false, create the dir
+            print(is_keydir)
+
+            # there is a do_keys_exist method in the crypto handlers!
+            is_privkey = os.path.isfile(server_privkey)
+            print(is_privkey)
+
+            is_pubkey = os.path.isfile(server_pubkey)
+            print(is_pubkey)
+
+            if is_privkey is False or is_pubkey is False:
+                crypto.create_keys('server')
+
+            return is_datadir,is_keydir
+
         except os.error as e:
             print(str(e))
 
     def get_status(self):
         pass
 
-
     def create_dir(self, dir):
         pass
 
     def create_keys(self):
-        pass
+        crypto = asym_crypto.AsymmetricCryptographyHandler()
 
 if __name__ == "__main__":
     server = ServerHandler()

@@ -31,6 +31,7 @@ __status__ = "Development"
         rekey_client() --
         list_active_chains() --
         list_clients() --
+        initialize() --
 
 """    
 
@@ -118,6 +119,10 @@ def revoke_client(client_id):
         with urllib.request.urlopen(__url + '/revoke_client/' + client_id) as get:
             print(get.read(300))
 
+def initialize():
+    with urllib.request.urlopen(__url + '/initialize/') as get:
+        print(get.read(300))
+
 parser = argparse.ArgumentParser(description="Interact with the kommen server")
 parser.add_argument("-a", "--add_client", dest="add", nargs="?", const="empty_string", help="add a new client")
 parser.add_argument("-d", "--delete_client", dest="delete", nargs="?", const="empty_string", help="delete the specified client")
@@ -128,6 +133,7 @@ parser.add_argument("-c", "--list-chains", dest="chains", nargs="?", const="empt
 parser.add_argument("-e", "--enable-client", dest="enable", nargs="?", const="empty_string", help="enable the specificed client")
 parser.add_argument("-x", "--disable-client", dest="disable", nargs="?", const="empty_string", help="disable the specificed client")
 parser.add_argument("-v", "--revoke-client", dest="revoke", nargs="?", const="empty_string", help="revoke the specificed client's asymmetric keypair")
+parser.add_argument("-i", "--initialize", dest="initialize", nargs="?", const="empty_string", help="initialize the server")
 
 args = parser.parse_args()
 
@@ -149,5 +155,7 @@ elif args.disable:
     disable_client(args.disable)
 elif args.revoke:
     revoke_client(args.revoke)
+elif args.initialize:
+    initialize()
 else:
     print("This went wrong")   
