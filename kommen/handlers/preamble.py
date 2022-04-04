@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 
-"""socket.py: """
+"""preamble.py: """
 
 import sys
 import json
@@ -11,6 +11,7 @@ import multiprocessing
 #from handlers import firewall
 #from handlers import clients
 #from handlers import database
+from crypto.asym_crypto import AsymmetricCryptographyHandler
 
 __author__ = "Jason M. Pittman"
 __copyright__ = "Copyright 2021, Salus Technologies"
@@ -28,8 +29,11 @@ def handle(connection, address):
         while True:
             data = connection.recv(1024)
             #we process the preamble here
-            client_id, count, pubkey = data.decode("utf-8").strip().split(',') # decode and split on comma to get client_id, counter
-            print(client_id + 'is at ' + count + ' with key' + pubkey)
+            payload = handle_premable(data, client_id)
+
+            #this is a simple test of plaintext payload
+            #client_id, count, pubkey = data.decode("utf-8").strip().split(',') # decode and split on comma to get client_id, counter
+            #print(client_id + 'is at ' + count + ' with key' + pubkey)
             
             
             # check client_id and count against database
@@ -47,13 +51,19 @@ def handle(connection, address):
     finally:
         connection.close()
 
-def handle_premable():
+def handle_premable(data, client_id):
     #decrypt payload
+    try:
+        decryptor = AsymmetricCryptographyHandler()
+        plaintext = decryptor.decrypt(data, client_id)
+    except Exception as e:
+        print("An exception has occured: " + str(e))
+
     #Server checks clients object for client_id:
     #if the client_id is in clients, server replies with a received_valid message
     #if the client_id is not in clients, server replies with a received_invalid message
     
-    pass
+    return plaintext
 
 def handle_exchange():
     pass
