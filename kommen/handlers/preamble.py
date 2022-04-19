@@ -61,26 +61,26 @@ class PreambleHandler:
     def handle_racs(self):
         pass
 
-    def sanitize_premable(self, payload):
+    def sanitize_premable(self, payload): # this works
         is_sanitized = False
         try:
             client = re.match('[a-f0-9]{64}$', payload[0])
-            #counter = re.match(r'^[0-9]+$', int(payload[1]))
-            #key = re.match(r'/^[a-f0-9]{64}$/gi', str(payload[0]))
+            counter = re.match('[0-9]+', payload[1])
+            key = re.match('[a-f0-9]{64}$', payload[2])
         except Exception as e:
             print(str(e))
         
         #validate client_id is size and char set expected
         if client:
-            sanitized = True
+            is_sanitized = True
 
         #validate counter is integer in expected range
-        #if counter:
-        #    sanitized = True
+        if counter:
+            is_sanitized = True
 
         #validate key is size and char set expected
-        #if key:
-        #    sanitized = True
+        if key:
+            is_sanitized = True
 
         return is_sanitized
 
