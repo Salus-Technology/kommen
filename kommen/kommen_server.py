@@ -51,18 +51,11 @@ class KommenServer:
             while True:
                 data = connection.recv(1024)
                 #we process the preamble here
-                
 
-                #this is a simple test of plaintext payload
-                #we should validate this input to be safe
-                
-
-                #client_id, count, pubkey = data.decode("utf-8").strip().split(',') # decode and split on comma to get client_id, counter
-                #print(client_id + ' is at ' + count + ' with key ' + pubkey)
                 plaintext = pre.handle_premable(data)
                 print(plaintext)
                 
-                # check client_id and count against database
+                # if the preamble is good, we ack we process the racs into the firewall
 
 
                 #this stops infinite looping
@@ -71,7 +64,7 @@ class KommenServer:
                     break
                 print("Received data %r", plaintext)
 
-                #if all of the above is good, we send ack || if not good, we send resend
+                #if all of the above is good, we send ack for racs being ready || if not good, we send resend
                 connection.sendall(data)
                 print("Sent data")
 
