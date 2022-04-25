@@ -44,7 +44,7 @@ class PreambleHandler:
         #if the payload is sanitized, we return true else false
         is_sanitized = self.sanitize_premable(payload)
 
-        if is_sanitized:
+        if is_valid and is_sanitized:
             print('True')
         else:
             print('False')
@@ -89,6 +89,6 @@ class PreambleHandler:
         clients = json.dumps(db.read())
         
         if client_id in clients:
-            print("found client_id")
+            return True
         else:
-            print("didn't find client_id")
+            return False

@@ -50,32 +50,39 @@ class KommenServer:
 
             while True:
                 data = connection.recv(1024)
-                #we process the preamble here
-
-                plaintext = pre.handle_premable(data)
-                print(plaintext)
                 
-                # if the preamble is good, we ack we process the racs into the firewall
+                #need to differentiate between a data payload with preamble versus other
+                if len(data) in range(131, 151):
 
+                    #check if the client id is valid and the preamble is sanitized
+                    is_preamble = pre.handle_premable(data)
+                    
+                    # if the preamble is good, we ack we process the racs into the firewall
+                    if is_preamble:
+                        connection.sendall("PACK".encode())
+
+                else:
+                    print('Received data not a preamble') #placeholder
 
                 #this stops infinite looping
                 if data.decode("utf-8").strip() == "":
                     print("Socket closed remotely")
                     break
-                print("Received data %r", plaintext)
+                
+                print("Received data %r", data)
 
                 #if all of the above is good, we send ack for racs being ready || if not good, we send resend
-                connection.sendall(data)
-                print("Sent data")
+                #connection.sendall(data)
+                #print("Sent data")
 
         except Exception as e:
             print("An exception has occured: " + str(e))
         finally:
             connection.close()
-
+ 
 
 if __name__ == "__main__":
-    server = KommenServer("0.0.0.0", 5003)
+    server = KommenServer("0.0.0.0", 5002)
 
     try:
         print("Listening")
