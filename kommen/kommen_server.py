@@ -59,7 +59,9 @@ class KommenServer:
                     
                     # if the preamble is good, we ack we process the racs into the firewall
                     if is_preamble:
-                        connection.sendall("PACK".encode())
+                        connection.sendall("Preamble Acknowledged".encode())
+                    else:
+                        connection.sendall("There was an error with in the preamble")
 
                 else:
                     print('Received data not a preamble') #placeholder
