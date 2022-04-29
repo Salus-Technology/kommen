@@ -12,6 +12,7 @@ import multiprocessing
 
 # local packages
 from handlers import preamble
+from handlers import firewall
 
 __author__ = "Jason M. Pittman"
 __copyright__ = "Copyright 2022, Salus Technologies"
@@ -44,6 +45,7 @@ class KommenServer:
     def handle(self, connection, address):
 
         pre = preamble.PreambleHandler()
+        fw = firewall.FirewallHandler()
 
         try:
             print("Connected %r at %r", connection, address)
@@ -62,9 +64,11 @@ class KommenServer:
                         connection.sendall("Preamble Acknowledged".encode())
                     else:
                         connection.sendall("There was an error with in the preamble")
-
+                #elif len(data) == 6:
+                #    print('Received RAC from client')
+                    # logic to integrate with netfilter through our FirewallHanlder
                 else:
-                    print('Received data not a preamble') #placeholder
+                    print('Invalid preamble received') #placeholder
 
                 #this stops infinite looping
                 if data.decode("utf-8").strip() == "":

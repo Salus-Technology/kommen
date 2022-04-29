@@ -16,6 +16,8 @@ from handlers import clients
 from handlers import registration
 from handlers import server
 
+from kommen.handlers.remote_access_sequence import RemoteAccessCodeSequenceHandler
+
 __author__ = "Jason M. Pittman"
 __copyright__ = "Copyright 2021, Salus Technologies"
 __credits__ = ["Jason M. Pittman", "Kyle Wiseman"]
@@ -194,9 +196,12 @@ def revoke_client(client_id):
     else:
         return "<h1> Failed to revoked client's keys" + client_id + "</h1>"
 
-
-#put the code here that handles the racs input from a client
-#need to build racs daemon that works like any network enabled daemon tcp
+def load_racs():
+    racs = RemoteAccessCodeSequenceHandler()
+    
+    #generate a racs for each client
+    #ensure it is unique or regenerate
+    #send to the fw handler to be built as a chain
 
 def load_clients( ): #this works 9/11
     # connect to db
@@ -217,13 +222,5 @@ def load_clients( ): #this works 9/11
         
         list_of_clients.add_client(new_client)
 
-def initialize_server():
-    # check for data dir
-    
-    # check for keys dir
-    
-    # check for server keys (pub, priv, sym)
-    
-    pass
 
 app.run()

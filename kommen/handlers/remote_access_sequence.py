@@ -27,7 +27,7 @@ class RemoteAccessCodeSequenceHandler:
         
     """
     def __init__(self):
-        self.__blacklist = [0, 80]
+        self.__blacklist = [0, 80, 5002]
         self.__rar_length = 5
         self.__racs = []
 
