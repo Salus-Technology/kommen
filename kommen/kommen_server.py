@@ -53,7 +53,7 @@ class KommenServer:
             while True:
                 data = connection.recv(1024)
                 
-                #need to differentiate between a data payload with preamble versus other
+                #need to differentiate between a rac data payload, a preamble versus other
                 if len(data) in range(131, 151):
 
                     #check if the client id is valid and the preamble is sanitized
@@ -64,11 +64,12 @@ class KommenServer:
                         connection.sendall("Preamble Acknowledged".encode())
                     else:
                         connection.sendall("There was an error with in the preamble")
-                #elif len(data) == 6:
-                #    print('Received RAC from client')
-                    # logic to integrate with netfilter through our FirewallHanlder
+                elif len(data) == 6:
+                    # we need access to the client dictionary here i think...
+                    fw.remove_knock_chains() # we need to remove any existing knock chains for the client
+                    fw.add_knock_chains() # we need to store incoming rac for each client until we get all three and then add the chains
                 else:
-                    print('Invalid preamble received') #placeholder
+                    print('Invalid preamble received') #placeholder...this applies to anything not a preamble or rac
 
                 #this stops infinite looping
                 if data.decode("utf-8").strip() == "":
