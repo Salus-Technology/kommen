@@ -7,6 +7,8 @@ import sys
 import json
 import socket
 import multiprocessing
+from collections import defaultdict
+from xml.etree.ElementInclude import include
 
 # third party imports
 
@@ -47,6 +49,8 @@ class KommenServer:
         pre = preamble.PreambleHandler()
         fw = firewall.FirewallHandler()
 
+        incoming_clients = {}
+
         try:
             print("Connected %r at %r", connection, address)
 
@@ -64,10 +68,28 @@ class KommenServer:
                         connection.sendall("Preamble Acknowledged".encode())
                     else:
                         connection.sendall("There was an error with in the preamble")
-                elif len(data) == 6:
-                    # we need access to the client dictionary here i think...
-                    fw.remove_knock_chains() # we need to remove any existing knock chains for the client
-                    fw.add_knock_chains() # we need to store incoming rac for each client until we get all three and then add the chains
+                elif len(data) == 73:
+                    print('Incoming RAC detected...') # this needs to go out into a separate method
+                    
+                    rac_payload = tuple(x for x in data.decode("utf-8").strip().split(','))
+                                        
+                    if rac_payload[1] == '1':
+                        incoming_clients.setdefault(rac_payload[0], []).append(rac_payload[2])
+                    elif rac_payload[1] == '2':
+                        incoming_clients.setdefault(rac_payload[0], []).append(rac_payload[2])
+                    elif rac_payload[1] == '3':
+                        incoming_clients.setdefault(rac_payload[0], []).append(rac_payload[2])
+                    else:
+                        print('Sequence number out of bounds')
+
+
+                    #for k, v in incoming_clients.items():
+                    #    print(k,v)
+                        
+
+                    #fw.remove_knock_chains() # we need to remove any existing knock chains for the client
+                    
+                    #fw.add_knock_chains() # we need to store incoming rac for each client until we get all three and then add the chains
                 else:
                     print('Invalid preamble received') #placeholder...this applies to anything not a preamble or rac
 
@@ -89,7 +111,7 @@ class KommenServer:
  
 
 if __name__ == "__main__":
-    server = KommenServer("0.0.0.0", 5002)
+    server = KommenServer("0.0.0.0", 5001)
 
     try:
         print("Listening")

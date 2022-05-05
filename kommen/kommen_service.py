@@ -196,13 +196,6 @@ def revoke_client(client_id):
     else:
         return "<h1> Failed to revoked client's keys" + client_id + "</h1>"
 
-def load_racs():
-    racs = RemoteAccessCodeSequenceHandler()
-    
-    #generate a racs for each client
-    #ensure it is unique or regenerate
-    #send to the fw handler to be built as a chain
-
 def load_clients( ): #this works 9/11
     # connect to db
     db = database.DatabaseHandler()
