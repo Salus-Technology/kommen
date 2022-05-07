@@ -15,6 +15,7 @@ from xml.etree.ElementInclude import include
 # local packages
 from handlers import preamble
 from handlers import firewall
+#from kommen.handlers.firewall import FirewallHandler
 
 __author__ = "Jason M. Pittman"
 __copyright__ = "Copyright 2022, Salus Technologies"
@@ -30,11 +31,19 @@ class KommenServer:
     def __init__(self, server_ip, server_port):
         self.server_ip = server_ip
         self.server_port = server_port
+        self.fw = firewall.FirewallHandler()
 
     def start(self):
         self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.server_socket.bind((self.server_ip, self.server_port))
         self.server_socket.listen(1)
+
+        # check if the default fw rules and etc. are in place
+        if self.fw.are_default_rules_present():
+            pass
+        else:
+            #self.fw.set_default_rules()
+            pass
 
         while True:
             conn, address = self.server_socket.accept()
@@ -47,8 +56,7 @@ class KommenServer:
     def handle(self, connection, address):
 
         pre = preamble.PreambleHandler()
-        fw = firewall.FirewallHandler()
-
+        
         incoming_clients = {}
 
         try:

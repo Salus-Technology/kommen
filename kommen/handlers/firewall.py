@@ -76,10 +76,20 @@ class FirewallHandler():
         return rules
 
     def are_default_rules_present(self): #do we need this method?
-        return 0
+        #get list of active rules in INPUT chain
+        try:
+            chain = iptc.easy.dump_chain('filter', 'INPUT', ipv6=False)
+            #comment = chain[0]['comment']['comment']
+            for i in range(0,len(chain)):
+                print(chain[i]['comment']['comment'])
+                
+        except Exception as e:
+            print(str(e))
+        
+
 
     def set_default_rules(self): # tested on 9/7 need error handling and maybe add a full table flush #check on 9/18 and the second rule isn't setting?
-        """Sets a list of default rules to allow traffic on our loopback as well as knock traffic
+        """Sets a list of default rules to allow traffic on our loopback as well as rac traffic
         
         Args: 
 
@@ -87,24 +97,22 @@ class FirewallHandler():
             
         
         """
-        #get list of active rules in INPUT chain
-        #rules = self.get_rules_in_chain('INPUT')
         
         rule_loopback = iptc.Rule()
         rule_loopback.src = "127.0.0.1"
         rule_loopback.target = rule_loopback.create_target("ACCEPT")
         match = rule_loopback.create_match("comment")
-        match.comment = "default pk rule to accept loopback traffic"
+        match.comment = "default racs rule to accept loopback traffic"
         chain = iptc.Chain(iptc.Table(iptc.Table.FILTER), "INPUT")
         chain.insert_rule(rule_loopback)
 
         rule_knock = iptc.Rule()
         rule_knock.target = rule_knock.create_target("ACCEPT")
         match = rule_knock.create_match("comment")
-        match.comment = "default pk rule to accept knock traffic" 
+        match.comment = "default racs rule to accept rac traffic" 
         match = iptc.Match(rule_knock, "state")
         chain = iptc.Chain(iptc.Table(iptc.Table.FILTER), "INPUT")
-        match.state = "RELATED, ESTABLISHED"
+        match.state = "RELATED,ESTABLISHED"
         rule_knock.add_match(match)
         chain.insert_rule(rule_knock)
 
