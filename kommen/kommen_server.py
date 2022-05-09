@@ -40,10 +40,9 @@ class KommenServer:
 
         # check if the default fw rules and etc. are in place
         if self.fw.are_default_rules_present():
-            pass
+            print('default rules found')
         else:
-            #self.fw.set_default_rules()
-            pass
+            self.fw.set_default_rules()
 
         while True:
             conn, address = self.server_socket.accept()
@@ -89,10 +88,6 @@ class KommenServer:
                         incoming_clients.setdefault(rac_payload[0], []).append(rac_payload[2])
                     else:
                         print('Sequence number out of bounds')
-
-
-                    #for k, v in incoming_clients.items():
-                    #    print(k,v)
                         
 
                     #fw.remove_knock_chains() # we need to remove any existing knock chains for the client

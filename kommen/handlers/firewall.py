@@ -53,7 +53,7 @@ class FirewallHandler():
 
         return chains
 
-    def get_rules_in_chain(self, chain): #this looks done?
+    def get_rules_in_chain(self, chain): #this causes an exception...maybe remove method
         """Queries local IPTables for list of rules in specified chain
         
         Args: 
@@ -75,20 +75,24 @@ class FirewallHandler():
         
         return rules
 
-    def are_default_rules_present(self): #do we need this method?
-        #get list of active rules in INPUT chain
+    def are_default_rules_present(self): #done 5/9/22
+        is_present = False
+
         try:
             chain = iptc.easy.dump_chain('filter', 'INPUT', ipv6=False)
-            #comment = chain[0]['comment']['comment']
+            
             for i in range(0,len(chain)):
-                print(chain[i]['comment']['comment'])
-                
+                if chain[i]['comment']['comment'] == "default racs rule to accept loopback traffic":
+                    is_present = True
+                else:
+                    is_present = False
         except Exception as e:
             print(str(e))
         
+        return is_present
+        
 
-
-    def set_default_rules(self): # tested on 9/7 need error handling and maybe add a full table flush #check on 9/18 and the second rule isn't setting?
+    def set_default_rules(self): # done 5/9/22
         """Sets a list of default rules to allow traffic on our loopback as well as rac traffic
         
         Args: 
@@ -130,9 +134,9 @@ class FirewallHandler():
 
         for section in config.sections():
             rule = iptc.Rule()
-            if config.get(section, 'src') is not '':
+            if config.get(section, 'src') != '':
                 rule.src = config.get(section, 'src')
-            if config.get(section, 'dst') is not '':
+            if config.get(section, 'dst') != '':
                 rule.dst = config.get(section, 'dst')
             rule.in_interface = config.get(section, 'interface')
             rule.protocol = config.get(section, 'protocol')
