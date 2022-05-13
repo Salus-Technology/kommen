@@ -203,9 +203,12 @@ class FirewallHandler():
 
             Returns:
         """
-        name = "KNOCK" + knock + "_" + client
-        state = "STATE" + state + "_" + client
-        command = "iptables -A " + state + " -p tcp --dport " + port + " -m recent --name " + name + " --set -j DROP"
+        try:
+            name = "KNOCK" + knock + "_" + client
+            state = "STATE" + state + "_" + client
+            command = "iptables -A " + state + " -p tcp --dport " + port + " -m recent --name " + name + " --set -j DROP"
+        except Exception as e:
+            print('Error from FirewallHander at line 211 as ' + str(e))
 
         return command
 

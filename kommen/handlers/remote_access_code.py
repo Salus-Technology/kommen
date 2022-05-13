@@ -31,7 +31,8 @@ class RemoteAccessCodeHandler:
 
         """ 
         if secret != None:       
-            self.__secret = secret
+            self.__secret = base64.b32encode(secret.encode('ascii'))
+            print(type(self.__secret))
         
         if length != None:
             self.__length = length
@@ -50,9 +51,11 @@ class RemoteAccessCodeHandler:
             Returns:
                 rac(int):
         """
+        try:
+            rac = remote_access_code.HOTP(self.__secret, self.__length, digest=hashlib.sha512)
+        except Exception as e:
+            print('Error in generate_rac at line 57 as ' + str(e))
 
-        rac = remote_access_code.HOTP(self.__secret, self.__length, digest=hashlib.sha512)
-        
         return rac.at(counter)
 
     def verify_rac(self, result, counter):

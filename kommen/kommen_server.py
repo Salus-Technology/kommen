@@ -15,6 +15,8 @@ from xml.etree.ElementInclude import include
 # local packages
 from handlers import preamble
 from handlers import firewall
+from handlers import remote_access_sequence
+from handlers import remote_access_code
 #from kommen.handlers.firewall import FirewallHandler
 
 __author__ = "Jason M. Pittman"
@@ -56,7 +58,10 @@ class KommenServer:
 
         pre = preamble.PreambleHandler()
         
-        incoming_clients = {}
+        racs = remote_access_sequence.RemoteAccessCodeSequenceHandler()
+        
+        #incoming_clients = {}
+        ports = []
 
         try:
             print("Connected %r at %r", connection, address)
@@ -73,26 +78,51 @@ class KommenServer:
                     # if the preamble is good, we ack we process the racs into the firewall
                     if is_preamble:
                         connection.sendall("Preamble Acknowledged".encode())
+
+                        try:
+                            # set client iptables chain with rules here / increment counter + 1 before doing so
+
+                            # check if client knock chains present in iptables
+
+                            # we need to remove any existing knock chains for the client if present
+                            #self.fw.remove_knock_chains(is_preamble[0]) 
+                        
+                            # generate client racs here [this works as of 5/11/22]
+                            rac = remote_access_code.RemoteAccessCodeHandler(is_preamble[0])
+                            
+                            is_generated = racs.generate_racs(rac.generate_rac(int(is_preamble[1])))
+                            print(is_generated)
+
+                            ports = racs.get_racs()
+                            print(ports)
+
+                            #testing here can't create chain STATE0_802bae5a50989204908bd1208a09187308eed3987914e677979f6373733d7601: b'Invalid argument'
+                            self.fw.add_knock_chains(is_preamble[0], ports) # we need to store incoming rac for each client until we get all three and then add the chains
+
+                            # echo "iptables -D INPUT -s 192.168.1.100 -j DROP" | at @10pm at -t 202005111321.32
+
+                            connection.sendall("RACS added to IPTables".encode())
+                        except Exception as e:
+                            print('Error at line 97 as ' + str(e))
+
                     else:
                         connection.sendall("There was an error with in the preamble")
-                elif len(data) == 73:
-                    print('Incoming RAC detected...') # this needs to go out into a separate method
-                    
-                    rac_payload = tuple(x for x in data.decode("utf-8").strip().split(','))
-                                        
-                    if rac_payload[1] == '1':
-                        incoming_clients.setdefault(rac_payload[0], []).append(rac_payload[2])
-                    elif rac_payload[1] == '2':
-                        incoming_clients.setdefault(rac_payload[0], []).append(rac_payload[2])
-                    elif rac_payload[1] == '3':
-                        incoming_clients.setdefault(rac_payload[0], []).append(rac_payload[2])
-                    else:
-                        print('Sequence number out of bounds')
-                        
 
-                    #fw.remove_knock_chains() # we need to remove any existing knock chains for the client
+                # I don't think we need this after all 5/10        
+                #elif len(data) == 73:
+                #    print('Incoming RAC detected...') # this needs to go out into a separate method
                     
-                    #fw.add_knock_chains() # we need to store incoming rac for each client until we get all three and then add the chains
+                #    rac_payload = tuple(x for x in data.decode("utf-8").strip().split(','))
+                                        
+                #    if rac_payload[1] == '1':
+                #        incoming_clients.setdefault(rac_payload[0], []).append(rac_payload[2])
+                #    elif rac_payload[1] == '2':
+                #        incoming_clients.setdefault(rac_payload[0], []).append(rac_payload[2])
+                #    elif rac_payload[1] == '3':
+                #        incoming_clients.setdefault(rac_payload[0], []).append(rac_payload[2])
+                #    else:
+                #        print('Sequence number out of bounds')
+                    
                 else:
                     print('Invalid preamble received') #placeholder...this applies to anything not a preamble or rac
 
@@ -114,7 +144,7 @@ class KommenServer:
  
 
 if __name__ == "__main__":
-    server = KommenServer("0.0.0.0", 5001)
+    server = KommenServer("0.0.0.0", 5002)
 
     try:
         print("Listening")

@@ -40,7 +40,8 @@ class RemoteAccessCodeSequenceHandler:
         try:
             self.__racs.append([int((rac[i:i + self.__rar_length])) for i in range(0, len(rac), self.__rar_length)])
             return 0
-        except:
+        except Exception as e:
+            print('Error in generate_racs at line 44 as ' + str(e))
             return 1
 
     def verify_racs(self):
