@@ -182,15 +182,15 @@ class FirewallHandler():
         try:
             if not self.is_knock_chain_present('STATE0_' + c):
                 print('STATE0 chain not present...creating it now')
-                #STATE0 = table.create_chain('STATE0_' + client)
-                subprocess.run(["iptables -N STATE0_" + c], shell=True)
-                #self.__add_knock_rules('STATE0', client, ports) #should we flush before adding? we don't want to double rules
+                STATE0 = table.create_chain('STATE0_' + c)
+                #subprocess.run(["iptables -N STATE0_" + c], shell=True)
+                self.__add_knock_rules('STATE0', c, ports) #should we flush before adding? we don't want to double rules
             
-            #if not self.is_knock_chain_present('STATE1_' + client):
-            #    print('STATE1 chain not present...creating it now')
-            #    #STATE1 = table.create_chain('STATE1_' + client)
+            if not self.is_knock_chain_present('STATE1_' + c):
+                print('STATE1 chain not present...creating it now')
+                STATE1 = table.create_chain('STATE1_' + c)
             #    subprocess.run(["iptables -N STATE1_" + client], shell=True) #this works whereas iptc didn't
-            #    self.__add_knock_rules('STATE1', client, ports)
+                self.__add_knock_rules('STATE1', c, ports)
 
             #STATE2 = table.create_chain('STATE2_' + client)
             #self.__add_knock_rules('STATE2', client, ports)
