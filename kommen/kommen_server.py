@@ -96,8 +96,9 @@ class KommenServer:
                             ports = racs.get_racs()
                             print(ports)
 
-                            #testing here can't create chain STATE0_802bae5a50989204908bd1208a09187308eed3987914e677979f6373733d7601: b'Invalid argument'
-                            self.fw.add_knock_chains(is_preamble[0], ports) # we need to store incoming rac for each client until we get all three and then add the chains
+                            #testing here can't create chain STATE0_802bae5a50989204908bd1208a09187308eed3987914e677979f6373733d7601: b'Invalid argument' 
+                            # chain names can only be 29 chars
+                            self.fw.add_knock_chains(is_preamble[0], ports) 
 
                             # echo "iptables -D INPUT -s 192.168.1.100 -j DROP" | at @10pm at -t 202005111321.32
 

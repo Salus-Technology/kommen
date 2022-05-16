@@ -174,27 +174,34 @@ class FirewallHandler():
         """
         table = iptc.Table(iptc.Table.FILTER)
         
-        #need to flush rules if chain exists and ensure __add runs
-
-        if not self.is_knock_chain_present('STATE0_' + client):
-            print('STATE0 chain not present...creating it now')
-            STATE0 = table.create_chain('STATE0_' + client)
-            self.__add_knock_rules('STATE0', client, ports) #should we flush before adding? we don't want to double rules
+        # we client the client id to 10 char because of iptables limitation on chain name
+        c = client[1:10]
         
-        if not self.is_knock_chain_present('STATE1_' + client):
-            print('STATE1 chain not present...creating it now')
-            #STATE1 = table.create_chain('STATE1_' + client)
-            subprocess.run(["iptables -N STATE1_" + client], shell=True) #this works whereas iptc didn't
-            self.__add_knock_rules('STATE1', client, ports)
+        #need to flush rules if chain exists and ensure __add runs      
+        
+        try:
+            if not self.is_knock_chain_present('STATE0_' + c):
+                print('STATE0 chain not present...creating it now')
+                #STATE0 = table.create_chain('STATE0_' + client)
+                subprocess.run(["iptables -N STATE0_" + c], shell=True)
+                #self.__add_knock_rules('STATE0', client, ports) #should we flush before adding? we don't want to double rules
+            
+            #if not self.is_knock_chain_present('STATE1_' + client):
+            #    print('STATE1 chain not present...creating it now')
+            #    #STATE1 = table.create_chain('STATE1_' + client)
+            #    subprocess.run(["iptables -N STATE1_" + client], shell=True) #this works whereas iptc didn't
+            #    self.__add_knock_rules('STATE1', client, ports)
 
-        #STATE2 = table.create_chain('STATE2_' + client)
-        #self.__add_knock_rules('STATE2', client, ports)
+            #STATE2 = table.create_chain('STATE2_' + client)
+            #self.__add_knock_rules('STATE2', client, ports)
 
-        #STATE3 = table.create_chain('STATE3_' + client)
-        #self.__add_knock_rules('STATE3', client, ports)
+            #STATE3 = table.create_chain('STATE3_' + client)
+            #self.__add_knock_rules('STATE3', client, ports)
 
-        # add our knock state chains to the main INPUT chain
-        #self.__add_knock_rules('INPUT', client, ports)
+            # add our knock state chains to the main INPUT chain
+            #self.__add_knock_rules('INPUT', client, ports)
+        except Exception as e:
+            print('Error from FirewallHander at in add_knock_chains as ' + str(e))
 
     def __build_command(self, client, knock, state, port): #tested 9/22 needs docstring
         """Utility method to build dynamic strings used in knock rules
