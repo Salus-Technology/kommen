@@ -93,11 +93,9 @@ class KommenServer:
                             is_generated = racs.generate_racs(rac.generate_rac(int(is_preamble[1])))
                             print(is_generated)
 
-                            ports = racs.get_racs()
+                            ports = racs.get_racs() # we're getting ports > 65535 here...
                             print(ports)
 
-                            #testing here can't create chain STATE0_802bae5a50989204908bd1208a09187308eed3987914e677979f6373733d7601: b'Invalid argument' 
-                            # chain names can only be 29 chars
                             self.fw.add_knock_chains(is_preamble[0], ports) 
 
                             # echo "iptables -D INPUT -s 192.168.1.100 -j DROP" | at @10pm at -t 202005111321.32

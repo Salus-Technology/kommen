@@ -3,7 +3,7 @@
 """firewall.py: """
 
 # imports
-
+import time
 
 __author__ = "Jason M. Pittman"
 __copyright__ = "Copyright 2021, Salus Technologies"
@@ -102,15 +102,17 @@ class FirewallHandler():
         
         """
         
-        rule_loopback = iptc.Rule()
+        subprocess.run(["iptables -A INPUT -i lo -j ACCEPT"], shell=True)
+        '''rule_loopback = iptc.Rule()
         rule_loopback.src = "127.0.0.1"
         rule_loopback.target = rule_loopback.create_target("ACCEPT")
         match = rule_loopback.create_match("comment")
         match.comment = "default racs rule to accept loopback traffic"
         chain = iptc.Chain(iptc.Table(iptc.Table.FILTER), "INPUT")
-        chain.insert_rule(rule_loopback)
+        chain.insert_rule(rule_loopback)'''
 
-        rule_knock = iptc.Rule()
+        subprocess.run(["iptables -A INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT"], shell=True)
+        '''rule_knock = iptc.Rule()
         rule_knock.target = rule_knock.create_target("ACCEPT")
         match = rule_knock.create_match("comment")
         match.comment = "default racs rule to accept rac traffic" 
@@ -118,7 +120,9 @@ class FirewallHandler():
         chain = iptc.Chain(iptc.Table(iptc.Table.FILTER), "INPUT")
         match.state = "RELATED,ESTABLISHED"
         rule_knock.add_match(match)
-        chain.insert_rule(rule_knock)
+        chain.insert_rule(rule_knock)'''
+
+        # set user defined exceptions here (e.g., web server)
 
     def set_user_rules(self, services): #tested on 9/18 need error handling
         """Sets a list of user defined services to accomodate public servers
@@ -180,28 +184,48 @@ class FirewallHandler():
         #need to flush rules if chain exists and ensure __add runs      
         
         try:
-            if not self.is_knock_chain_present('STATE0_' + c):
+            # racs chain to hold rac chains
+            self.__build_racs_chain()
+
+            # chain for first rac
+            self.__build_state0_chain(table, c, ports) #this works but needs knock tested 5/20
+            '''if not self.is_knock_chain_present('STATE0_' + c):
                 print('STATE0 chain not present...creating it now')
                 STATE0 = table.create_chain('STATE0_' + c)
                 #subprocess.run(["iptables -N STATE0_" + c], shell=True)
-                self.__add_knock_rules('STATE0', c, ports) #should we flush before adding? we don't want to double rules
-            
-            if not self.is_knock_chain_present('STATE1_' + c):
+                self.__add_knock_rules('STATE0', c, ports) 
+                time.sleep(0.25)'''
+
+            # chain for second rac
+            self.__build_state1_chain(table, c, ports) #could just pass ports[1] here and don't know if we need table
+            '''if not self.is_knock_chain_present('STATE1_' + c): 
                 print('STATE1 chain not present...creating it now')
-                STATE1 = table.create_chain('STATE1_' + c)
-            #    subprocess.run(["iptables -N STATE1_" + client], shell=True) #this works whereas iptc didn't
-                self.__add_knock_rules('STATE1', c, ports)
+                #STATE1 = table.create_chain('STATE1_' + c) # no idea why this doesn't create the chain...i think there's a bug in the iptc package
+                subprocess.run(["iptables -N STATE1_" + c], shell=True) 
+                self.__add_knock_rules('STATE1', c, ports) # this should run even if the chain exists or do we need to for the rule on the chain?
+                time.sleep(0.25)'''
 
-            #STATE2 = table.create_chain('STATE2_' + client)
-            #self.__add_knock_rules('STATE2', client, ports)
+            # chain for third rac
+            self.__build_state2_chain(table, c, ports)
+            '''if not self.is_knock_chain_present('STATE2_' + c):
+                print('STATE2 chain not present...creating it now')
+                #STATE2 = table.create_chain('STATE2_' + client)
+                subprocess.run(["iptables -N STATE2_" + c], shell=True)
+                self.__add_knock_rules('STATE2', c, ports)
+                time.sleep(0.25)'''
 
-            #STATE3 = table.create_chain('STATE3_' + client)
-            #self.__add_knock_rules('STATE3', client, ports)
+            # chain for racs passed to ssh
+            self.__build_state3_chain(table, c, "22") 
+            '''if not self.is_knock_chain_present('STATE3_' + c):
+                print('STATE3 chain not present...creating it now')
+                subprocess.run(["iptables -N STATE3_" + c], shell=True)
+                #STATE3 = table.create_chain('STATE3_' + client)
+                self.__add_knock_rules('STATE3', c, ports)'''
 
             # add our knock state chains to the main INPUT chain
-            #self.__add_knock_rules('INPUT', client, ports)
+            self.__build_input_chain(c)
         except Exception as e:
-            print('Error from FirewallHander at in add_knock_chains as ' + str(e))
+            print('Error from FirewallHandler at in add_knock_chains as ' + str(e))
 
     def __build_command(self, client, knock, state, port): #tested 9/22 needs docstring
         """Utility method to build dynamic strings used in knock rules
@@ -213,11 +237,11 @@ class FirewallHandler():
         try:
             name = "KNOCK" + knock + "_" + client
             state = "STATE" + state + "_" + client
-            command = "iptables -A " + state + " -p tcp --dport " + port + " -m recent --name " + name + " --set -j DROP"
-        except Exception as e:
-            print('Error from FirewallHander at line 211 as ' + str(e))
+            command = "iptables -A " + str(state) + " -p tcp --dport " + str(port) + " -m recent --name " + str(name) + " --set -j DROP"
 
-        return command
+            return command
+        except Exception as e:
+            print('Error from FirewallHandler in __build_command as ' + str(e))     
 
 
     def __add_knock_rules(self, chain, client, ports):
@@ -230,52 +254,212 @@ class FirewallHandler():
             Returns:
         
         """
-        if chain == 'STATE0':
-            command = self.__build_command(client, "1", "0", ports[0]) #this works
-            subprocess.run([command], shell=True)           
+        try:
+            if chain == 'STATE0':
+                command = self.__build_command(client, "1", "0", str(ports[0])) #this works
+                print(f'Adding {command} rule to {chain}')
+                subprocess.run([command], shell=True)           
+                
+                # -A STATE0_CLIENT -j DROP
+                subprocess.run(["iptables -A STATE0_" + client + " -j DROP"], shell=True) #this works. do we need another util method?
+
+            elif chain == 'STATE1':
+                # -A STATE1_CLIENT -m recent --name KNOCK1_CLIENT --remove
+                subprocess.run(["iptables -A STATE1_" + client + " -m recent --name KNOCK1_" + client + " --remove"], shell=True)
+                
+                # -A STATE1_CLIENT -p tcp --dport port[1] -m recent --name KNOCK2_CLIENT --set -j DROP
+                command = self.__build_command(client, "2", "1", str(ports[1]))
+                print(f'Adding {command} rule to {chain}')
+                subprocess.run([command], shell=True)
+                
+                # -A STATE1_CLIENT -j STATE0_CLIENT
+                subprocess.run(["iptables -A STATE1_" + client + " -j DROP"], shell=True)
+                
+                """ # -A STATE1_CLIENT -m recent --name KNOCK1_CLIENT --remove
+                subprocess.run(["iptables -A STATE1_" + client + " -m conntrack --ctstate ESTABLISHED,RELATED"], shell=True) #--name KNOCK1_" + client + " --remove"], shell=True)
+                # -A STATE1_CLIENT -p tcp --dport port[1] -m recent --name KNOCK2_CLIENT --set -j DROP
+                command = self.__build_command(client, "2", "1", str(ports[1]))
+                print(f'Adding {command} rule to {chain}')
+                subprocess.run([command], shell=True)
+                # -A STATE1_CLIENT -j STATE0_CLIENT
+                subprocess.run(["iptables -A STATE1_" + client + " -j DROP"], shell=True) """
+
+            elif chain == 'STATE2':
+                # -A STATE2_CLIENT -m recent --name KNOCK2_CLIENT --remove
+                subprocess.run(["iptables -A STATE2_" + client + " -m recent --name KNOCK2_" + client + " --remove"], shell=True)
+                
+                # -A STATE2_CLIENT -p tcp --dport port[2] -m recent --name KNOCK3_CLIENT --set -j DROP
+                command = self.__build_command(client, "3", "2", "65351") #str(ports[2])) #temp hardcoded until > error fixed in racs
+                print(f'Adding {command} rule to {chain}')
+                subprocess.run([command], shell=True)
+                
+                # -A STATE2_CLIENT -j STATE0_CLIENT
+                subprocess.run(["iptables -A STATE2_" + client + " -j DROP"], shell=True)
+
+            elif chain == 'STATE3':
+                # -A STATE3_CLIENT -m recent --name KNOCK3_CLIENT --remove
+                subprocess.run(["iptables -A STATE3_" + client + " -m recent --name KNOCK3_" + client + " --remove"], shell=True)
+
+                # -A STATE3_CLIENT -p tcp --dport 22 -j ACCEPT
+                command = self.__build_command(client, "3", "2", "22")
+                print(f'Adding {command} rule to {chain}')
+                subprocess.run([command], shell=True)
+                
+                # -A STATE3_CLIENT -j STATE0_CLIENT
+                subprocess.run(["iptables -A STATE3_" + client + " -j DROP"], shell=True)
+
+            elif chain == 'INPUT':
+                pass
+                # -A INPUT -m recent --name KNOCK3_CLIENT --rcheck -j STATE3_CLIENT
+                # -A INPUT -m recent --name KNOCK2_CLIENT --rcheck -j STATE2_CLIENT
+                # -A INPUT -m recent --name KNOCK1_CLIENT --rcheck -j STATE1_CLIENT
+                # -A INPUT -j STATE0_CLIENT
+            else:
+                print('Unknown chain name value passed to method') #failed to add rules to chain for some reason
+
+            # match = rule.create_match("comment")
+            # match.comment = "knock rule"
+            # match = rule.create_match('tcp')
+            # match.dport =  
+            # knock_chain = iptc.Chain(iptc.Table(iptc.Table.FILTER), chain)
+            # knock_chain.insert_rule(rule)
             
-            # -A STATE0_CLIENT -j DROP
-            subprocess.run(["iptables -A STATE0_" + client + " -j DROP"], shell=True) #this works. do we need another util method?
-
-        elif chain == 'STATE1':
-            # -A STATE1_CLIENT -m recent --name KNOCK1_CLIENT --remove
-            subprocess.run(["iptables -A STATE1_" + client + " -m recent --name KNOCK1_" + client + " --remove"], shell=True)
-            # -A STATE1_CLIENT -p tcp --dport port[1] -m recent --name KNOCK2_CLIENT --set -j DROP
-            command = self.__build_command(client, "2", "1", ports[1])
-            subprocess.run([command], shell=True)
-            # -A STATE1_CLIENT -j STATE0_CLIENT
-            subprocess.run(["iptables -A STATE1_" + client + " -j DROP"], shell=True)
-
-        elif chain == 'STATE2':
-            print()
-            # -A STATE2_CLIENT -m recent --name KNOCK2_CLIENT --remove
-            # -A STATE2_CLIENT -p tcp --dport port[2] -m recent --name KNOCK3_CLIENT --set -j DROP
-            # -A STATE2_CLIENT -j STATE0_CLIENT
-
-        elif chain == 'STATE3':
-            print()
-            # -A STATE3_CLIENT -m recent --name KNOCK3_CLIENT --remove
-            # -A STATE3_CLIENT -p tcp --dport 22 -j ACCEPT
-            # -A STATE3_CLIENT -j STATE0_CLIENT
-        elif chain == 'INPUT':
-            print()
-            # -A INPUT -m recent --name KNOCK3_CLIENT --rcheck -j STATE3_CLIENT
-            # -A INPUT -m recent --name KNOCK2_CLIENT --rcheck -j STATE2_CLIENT
-            # -A INPUT -m recent --name KNOCK1_CLIENT --rcheck -j STATE1_CLIENT
-            # -A INPUT -j STATE0_CLIENT
-        else:
-            print() #failed to add rules to chain for some reason
-        
- 
-        # match = rule.create_match("comment")
-        # match.comment = "knock rule"
-        # match = rule.create_match('tcp')
-        # match.dport =  
-        # knock_chain = iptc.Chain(iptc.Table(iptc.Table.FILTER), chain)
-        # knock_chain.insert_rule(rule)
-        
-        return 0
+            return 0
+        except Exception as e:
+            print('Error from FirewallHandler in __add_knock_rules as ' + str(e))
     
+    def __build_racs_chain(self):
+        if not self.is_knock_chain_present('RACS'):
+            print('RACS chain not present...creating it now')
+            try:
+                subprocess.run(["iptables -N RACS"], shell=True)
+            except Exception as e:
+                print('Error from FirewallHandler in __build_racs_chain as ' + str(e))
+        else:
+            print('RACS chain present')
+    
+    def __build_state0_chain(self, table, c, ports): # this works 5/22 but needs refactoring
+        if not self.is_knock_chain_present('STATE0_' + c):
+            print('STATE0 chain not present...creating it now')
+            try:
+                #create the chain
+                subprocess.run(["iptables -N STATE0_" + c], shell=True)
+
+                # add the first knock
+                subprocess.run(["iptables -A STATE0_" + c + " -m recent --name KNOCK0_" + c + " --remove"], shell=True)
+                subprocess.run(["iptables -A STATE0_" + c + " -p tcp --dport " + str(ports[0]) + " -m recent --name " + "KNOCK0_" + c + " --set -j DROP"], shell=True)
+
+                # drop all other traffic
+                subprocess.run(["iptables -A STATE0_" + c + " -j DROP"], shell=True) #this works. do we need another util method?
+            except Exception as e:
+                print('Error from FirewallHandler in __build_state0_chain as ' + str(e))
+        else:
+            print('STATE0 chain present...')
+            try:
+                # add the first knock
+                subprocess.run(["iptables -A STATE0_" + c + " -m recent --name KNOCK0_" + c + " --remove"], shell=True)
+                subprocess.run(["iptables -A STATE0_" + c + " -p tcp --dport " + str(ports[0]) + " -m recent --name " + "KNOCK0_" + c + " --set -j DROP"], shell=True)
+
+                # drop all other traffic
+                subprocess.run(["iptables -A STATE0_" + c + " -j DROP"], shell=True) #this works. do we need another util method?
+            except Exception as e:
+                print('Error from FirewallHandler in __build_state0_chain as ' + str(e))
+
+    def __build_state1_chain(self, table, c, ports): # this works 5/22 but needs refactoring
+        if not self.is_knock_chain_present('STATE1_' + c):
+            print('STATE1 chain not present...creating it now')
+            try:
+                #create the chain
+                subprocess.run(["iptables -N STATE1_" + c], shell=True)
+
+                # add the second knock
+                subprocess.run(["iptables -A STATE1_" + c + " -m recent --name KNOCK1_" + c + " --remove"], shell=True)
+                subprocess.run(["iptables -A STATE1_" + c + " -p tcp --dport " + str(ports[1]) + " -m recent --name " + "KNOCK1_" + c + " --set -j DROP"], shell=True)
+
+                # drop all other traffic
+                subprocess.run(["iptables -A STATE1_" + c + " -j DROP"], shell=True) #this works. do we need another util method?
+            except Exception as e:
+                print('Error from FirewallHandler in __build_state1_chain as ' + str(e))
+        else:
+            print('STATE1 chain present...')
+            try:
+                # add the second knock
+                subprocess.run(["iptables -A STATE1_" + c + " -m recent --name KNOCK1_" + c + " --remove"], shell=True)
+                subprocess.run(["iptables -A STATE1_" + c + " -p tcp --dport " + str(ports[1]) + " -m recent --name " + "KNOCK1_" + c + " --set -j DROP"], shell=True)
+
+                # drop all other traffic
+                subprocess.run(["iptables -A STATE1_" + c + " -j DROP"], shell=True) #this works. do we need another util method?
+            except Exception as e:
+                print('Error from FirewallHandler in __build_state1_chain as ' + str(e))
+
+    def __build_state2_chain(self, table, c, ports): # this works 5/22 but needs refactoring
+        if not self.is_knock_chain_present('STATE2_' + c):
+            print('STATE2 chain not present...creating it now')
+            try:
+                #create the chain
+                subprocess.run(["iptables -N STATE2_" + c], shell=True)
+
+                # add the third knock
+                subprocess.run(["iptables -A STATE2_" + c + " -m recent --name KNOCK2_" + c + " --remove"], shell=True)
+                subprocess.run(["iptables -A STATE2_" + c + " -p tcp --dport " + str(ports[2]) + " -m recent --name " + "KNOCK2_" + c + " --set -j DROP"], shell=True)
+
+                # drop all other traffic
+                subprocess.run(["iptables -A STATE2_" + c + " -j DROP"], shell=True) #this works. do we need another util method?
+            except Exception as e:
+                print('Error from FirewallHandler in __build_state2_chain as ' + str(e))
+        else:
+            print('STATE2 chain present...')
+            try:
+                # add the third knock
+                subprocess.run(["iptables -A STATE2_" + c + " -m recent --name KNOCK2_" + c + " --remove"], shell=True)
+                subprocess.run(["iptables -A STATE2_" + c + " -p tcp --dport " + str(ports[2]) + " -m recent --name " + "KNOCK2_" + c + " --set -j DROP"], shell=True)
+
+                # drop all other traffic
+                subprocess.run(["iptables -A STATE2_" + c + " -j DROP"], shell=True) #this works. do we need another util method?
+            except Exception as e:
+                print('Error from FirewallHandler in __build_state2_chain as ' + str(e))
+
+    def __build_state3_chain(self, table, c, ports): # don't need 'ports' here # this works 5/22 but needs refactoring
+        if not self.is_knock_chain_present('STATE3_' + c):
+            print('STATE3 chain not present...creating it now')
+            try:
+                #create the chain
+                subprocess.run(["iptables -N STATE3_" + c], shell=True)
+
+                # add the third knock
+                subprocess.run(["iptables -A STATE3_" + c + " -p tcp --dport 22 -m recent --name " + "KNOCK3_" + c + " --set -j DROP"], shell=True)
+                subprocess.run(["iptables -A STATE3_" + c + " -p tcp --dport 22 -j ACCEPT"], shell=True)
+
+                # drop all other traffic
+                subprocess.run(["iptables -A STATE3_" + c + " -j DROP"], shell=True) #this works. do we need another util method?
+            except Exception as e:
+                print('Error from FirewallHandler in __build_state2_chain as ' + str(e))
+        else:
+            print('STATE3 chain present...')
+            try:
+                # add the third knock
+                subprocess.run(["iptables -A STATE3_" + c + " -p tcp --dport 22 -m recent --name " + "KNOCK3_" + c + " --set -j DROP"], shell=True)
+                subprocess.run(["iptables -A STATE3_" + c + " -p tcp --dport 22 -j ACCEPT"], shell=True)
+
+                # drop all other traffic
+                subprocess.run(["iptables -A STATE3_" + c + " -j DROP"], shell=True) #this works. do we need another util method?
+            except Exception as e:
+                print('Error from FirewallHandler in __build_state2_chain as ' + str(e))
+
+    def __build_input_chain(self, c): 
+        try:
+            print('Adding RAC chains to RACS chain...')
+            # -A INPUT -m recent --name KNOCK3_CLIENT --rcheck -j STATE3_CLIENT
+            subprocess.run(["iptables -A RACS -m recent --rcheck --seconds 30 --name KNOCK3_" + c + " -j STATE3_" + c], shell=True)
+            # -A INPUT -m recent --name KNOCK2_CLIENT --rcheck -j STATE2_CLIENT
+            subprocess.run(["iptables -A RACS -m recent --rcheck --seconds 30 --name KNOCK2_" + c + " -j STATE2_" + c], shell=True)    
+            # -A INPUT -m recent --name KNOCK1_CLIENT --rcheck -j STATE1_CLIENT
+            subprocess.run(["iptables -A RACS -m recent --rcheck --seconds 30 --name KNOCK1_" + c + " -j STATE1_" + c], shell=True)
+            # -A INPUT -j STATE0_CLIENT                
+            subprocess.run(["iptables -A RACS -j STATE0_" + c], shell=True)                
+        except Exception as e:
+            print('Error from FirewallHandler in __build_input_chain as ' + str(e))
+
     def remove_knock_chains(self, client): # tested on 9/18 needs error handling
         """
             Args:
@@ -295,4 +479,4 @@ class FirewallHandler():
         
         except Exception as e:
             #print(e(str)) # need to implement logging here
-            print('error')
+            print('Error from FirewallHandler in remove_knock_chain as ' + str(e))
